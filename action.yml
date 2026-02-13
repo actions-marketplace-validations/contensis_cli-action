@@ -20,7 +20,7 @@ inputs:
     required: true
   command:
     description: "Optional: which cli command to run"
-    required: false
+    default: "--help"
   cli-version:
     description: "Optional: pull cli from specified tag. Default: release"
     default: release
@@ -45,15 +45,21 @@ runs:
 
     - name: Pull Contensis CLI docker image and run commands
       id: cli-command
-      uses: addnab/docker-run-action@v3
-      with:
-        image: ghcr.io/contensis/cli/main/app:${{ inputs.cli-version }}
-        options: -v ${{ steps.pwd.outputs.pwd }}/output.json:/usr/src/app/output.json
-        run: |
-          ${{ inputs.cli-splash }} && contensis
-          contensis connect ${{ inputs.alias }} -id ${{ inputs.client-id }} -s ${{ inputs.shared-secret }} -p ${{ inputs.project-id }}
-          contensis get version
-          contensis ${{ inputs.command || '--help' }} --output output.json
+      shell: bash
+      run: |
+        # Export all GITHUB_*, RUNNER_*, and CI env vars to a file
+        printenv | grep -E '^(GITHUB_|RUNNER_|CI=|HOME=|ACTIONS_)' > /tmp/github_env
+
+        docker run --rm \
+          --env-file /tmp/github_env \
+          -v ${{ steps.pwd.outputs.pwd }}/output.json:/usr/src/app/output.json \
+          ghcr.io/contensis/cli/main/app:${{ inputs.cli-version }} \
+          sh -c '
+            ${{ inputs.cli-splash }} && contensis;
+            contensis connect ${{ inputs.alias }} -id ${{ inputs.client-id }} -s ${{ inputs.shared-secret }} -p ${{ inputs.project-id }};
+            contensis get version;
+            contensis ${{ inputs.command }} --output output.json
+          '
 
     - name: Set output variables
       id: set
