@@ -52,6 +52,8 @@ runs:
 
         docker run --rm \
           --env-file /tmp/github_env \
+          -v ${{ steps.pwd.outputs.pwd }}:${{ steps.pwd.outputs.pwd }} \
+          -w ${{ steps.pwd.outputs.pwd }} \
           -v ${{ steps.pwd.outputs.pwd }}/output.json:/usr/src/app/output.json \
           ghcr.io/contensis/cli/main/app:${{ inputs.cli-version }} \
           sh -c '
