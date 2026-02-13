@@ -65,6 +65,8 @@ runs:
             [ "$CONTENSIS_CLI_SPLASH" = "true" ] && contensis;
             contensis connect "$CONTENSIS_ALIAS" -id "$CONTENSIS_CLIENT_ID" -s "$CONTENSIS_SHARED_SECRET" -p "$CONTENSIS_PROJECT_ID";
             contensis get version;
+            # Execute the user-provided CLI command with eval to allow for complex commands and shell expansions
+            # Output is written to output.json for capture by subsequent steps
             eval contensis $CONTENSIS_COMMAND --output output.json
           '
 
@@ -75,5 +77,6 @@ runs:
         {
           echo 'command-output<<EOF'
           cat output.json
+          echo ""
           echo 'EOF'
         } >> $GITHUB_OUTPUT
