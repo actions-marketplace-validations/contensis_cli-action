@@ -48,19 +48,32 @@ runs:
       shell: bash
       run: |
         # Export all GITHUB_*, RUNNER_*, and CI env vars to a file
+      env:
+        CONTENSIS_ALIAS: ${{ inputs.alias }}
+        CONTENSIS_PROJECT_ID: ${{ inputs["project-id"] }}
+        CONTENSIS_CLIENT_ID: ${{ inputs["client-id"] }}
+        CONTENSIS_SHARED_SECRET: ${{ inputs["shared-secret"] }}
+        CONTENSIS_COMMAND: ${{ inputs.command }}
+        CONTENSIS_CLI_SPLASH: ${{ inputs["cli-splash"] }}
+      run: |
+        # Export all GITHUB_*, RUNNER_*, and CI env vars to a file
         printenv | grep -E '^(GITHUB_|RUNNER_|CI=|HOME=|ACTIONS_)' > /tmp/github_env
 
         docker run --rm \
           --env-file /tmp/github_env \
-          -v ${{ steps.pwd.outputs.pwd }}:${{ steps.pwd.outputs.pwd }} \
-          -w ${{ steps.pwd.outputs.pwd }} \
+          -e CONTENSIS_ALIAS \
+          -e CONTENSIS_PROJECT_ID \
+          -e CONTENSIS_CLIENT_ID \
+          -e CONTENSIS_SHARED_SECRET \
+          -e CONTENSIS_COMMAND \
+          -e CONTENSIS_CLI_SPLASH \
           -v ${{ steps.pwd.outputs.pwd }}/output.json:/usr/src/app/output.json \
           ghcr.io/contensis/cli/main/app:${{ inputs.cli-version }} \
           sh -c '
-            ${{ inputs.cli-splash }} && contensis;
-            contensis connect ${{ inputs.alias }} -id ${{ inputs.client-id }} -s ${{ inputs.shared-secret }} -p ${{ inputs.project-id }};
+            $CONTENSIS_CLI_SPLASH && contensis;
+            contensis connect "$CONTENSIS_ALIAS" -id "$CONTENSIS_CLIENT_ID" -s "$CONTENSIS_SHARED_SECRET" -p "$CONTENSIS_PROJECT_ID";
             contensis get version;
-            contensis ${{ inputs.command }} --output output.json
+            contensis $CONTENSIS_COMMAND --output output.json
           '
 
     - name: Set output variables
