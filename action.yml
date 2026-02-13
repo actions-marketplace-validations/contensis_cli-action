@@ -65,13 +65,15 @@ runs:
             [ "$CONTENSIS_CLI_SPLASH" = "true" ] && contensis;
             contensis connect "$CONTENSIS_ALIAS" -id "$CONTENSIS_CLIENT_ID" -s "$CONTENSIS_SHARED_SECRET" -p "$CONTENSIS_PROJECT_ID";
             contensis get version;
-            contensis $CONTENSIS_COMMAND --output output.json
+            eval contensis $CONTENSIS_COMMAND --output output.json
           '
 
     - name: Set output variables
       id: set
       shell: bash
       run: |
-        RAW=$(echo -e "`cat output.json`" | tr "\n" " " | jq -sR .)
-        OUTPUT=$(echo -e $RAW)
-        echo "command-output=$OUTPUT" >> $GITHUB_OUTPUT
+        {
+          echo 'command-output<<EOF'
+          cat output.json
+          echo 'EOF'
+        } >> $GITHUB_OUTPUT
