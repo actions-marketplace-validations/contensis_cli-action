@@ -20,7 +20,7 @@ inputs:
     required: true
   command:
     description: "Optional: which cli command to run"
-    default: "--help"
+    required: false
   cli-version:
     description: "Optional: pull cli from specified tag. Default: release"
     default: release
@@ -46,27 +46,19 @@ runs:
     - name: Pull Contensis CLI docker image and run commands
       id: cli-command
       shell: bash
-      run: |
-        # Export all GITHUB_*, RUNNER_*, and CI env vars to a file
       env:
         CONTENSIS_ALIAS: ${{ inputs.alias }}
-        CONTENSIS_PROJECT_ID: ${{ inputs["project-id"] }}
-        CONTENSIS_CLIENT_ID: ${{ inputs["client-id"] }}
-        CONTENSIS_SHARED_SECRET: ${{ inputs["shared-secret"] }}
-        CONTENSIS_COMMAND: ${{ inputs.command }}
-        CONTENSIS_CLI_SPLASH: ${{ inputs["cli-splash"] }}
+        CONTENSIS_PROJECT_ID: ${{ inputs.project-id }}
+        CONTENSIS_CLIENT_ID: ${{ inputs.client-id }}
+        CONTENSIS_SHARED_SECRET: ${{ inputs.shared-secret }}
+        CONTENSIS_COMMAND: ${{ inputs.command || '--help' }}
+        CONTENSIS_CLI_SPLASH: ${{ inputs.cli-splash }}
       run: |
         # Export all GITHUB_*, RUNNER_*, and CI env vars to a file
-        printenv | grep -E '^(GITHUB_|RUNNER_|CI=|HOME=|ACTIONS_)' > /tmp/github_env
+        printenv | grep -E '^(CONTENSIS_|GITHUB_|RUNNER_|CI=|HOME=|ACTIONS_)' > /tmp/github_env
 
         docker run --rm \
           --env-file /tmp/github_env \
-          -e CONTENSIS_ALIAS \
-          -e CONTENSIS_PROJECT_ID \
-          -e CONTENSIS_CLIENT_ID \
-          -e CONTENSIS_SHARED_SECRET \
-          -e CONTENSIS_COMMAND \
-          -e CONTENSIS_CLI_SPLASH \
           -v ${{ steps.pwd.outputs.pwd }}/output.json:/usr/src/app/output.json \
           ghcr.io/contensis/cli/main/app:${{ inputs.cli-version }} \
           sh -c '
